@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,12 @@
     <meta name="description" content="YzY - 冒险岛罗朱跳台协作工具 - 实时标记平台路径">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
 </head>
+
 <body class="room-body">
     <!-- 顶部信息栏 -->
     <header class="room-header">
@@ -20,14 +24,10 @@
                 <span class="code" id="roomCodeDisplay">------</span>
                 <span class="label" style="margin-left: 8px;">密码</span>
                 <span class="code" id="roomPwdDisplay" style="font-size: 13px;">------</span>
-                <button class="copy-btn" onclick="copyRoomLink()" title="复制房间链接">📋</button>
+                <button class="copy-btn" onclick="copyRoomLink()" title="复制房间信息">📋</button>
             </div>
         </div>
         <div class="header-right">
-            <div class="path-area">
-                <span class="label">路径</span>
-                <span class="path-value" id="pathDisplay">????? ?????</span>
-            </div>
             <div class="room-count" id="roomCount" title="房间内人数">
                 <span>👤</span> <span id="countNum">0</span>
             </div>
@@ -36,6 +36,11 @@
             </div>
         </div>
     </header>
+    <!-- 路径显示（第二行） -->
+    <div class="path-bar">
+        <span class="label">我的路径</span>
+        <span class="path-value" id="pathDisplay">????? ?????</span>
+    </div>
 
     <!-- 角色选择 + 重置 -->
     <div class="controls-bar">
@@ -65,9 +70,9 @@
         // ===== 常量 =====
         const COLORS = [
             { bg: '#ff6b6b', glow: 'rgba(255,107,107,0.5)', text: '#fff' },  // 0: 红
-            { bg: '#51cf66', glow: 'rgba(81,207,102,0.5)',  text: '#fff' },  // 1: 绿
-            { bg: '#339af0', glow: 'rgba(51,154,240,0.5)',  text: '#fff' },  // 2: 蓝
-            { bg: '#cc5de8', glow: 'rgba(204,93,232,0.5)',  text: '#fff' },  // 3: 紫
+            { bg: '#51cf66', glow: 'rgba(81,207,102,0.5)', text: '#fff' },  // 1: 绿
+            { bg: '#339af0', glow: 'rgba(51,154,240,0.5)', text: '#fff' },  // 2: 蓝
+            { bg: '#cc5de8', glow: 'rgba(204,93,232,0.5)', text: '#fff' },  // 3: 紫
         ];
         const EMPTY_COLOR = 4;
 
@@ -276,8 +281,8 @@
 
         // ===== 复制房间链接 =====
         function copyRoomLink() {
-            const url = window.location.href;
-            navigator.clipboard.writeText(url).then(() => {
+            const text = `房间: ${roomCode}  密码: ${roomPwd}`;
+            navigator.clipboard.writeText(text).then(() => {
                 const btn = document.querySelector('.copy-btn');
                 btn.textContent = '✅';
                 setTimeout(() => btn.textContent = '📋', 1500);
@@ -302,4 +307,5 @@
         connectWs();
     </script>
 </body>
+
 </html>
