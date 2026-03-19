@@ -17,9 +17,13 @@
                 <div class="logo-icon">🍄</div>
                 <h1 class="title">冒险岛 · 罗朱跳台协作工具</h1>
                 <p class="subtitle">冒险岛世界Artale - YzY公会</p>
+                <p class="online-badge" id="onlineBadge">🌐 在线: <span id="onlineCount">-</span> 人</p>
             </div>
 
             <div class="section">
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="text" id="createPwdInput" placeholder="自定义密码（留空自动生成）" maxlength="6" inputmode="numeric">
+                </div>
                 <button class="btn btn-primary" onclick="createRoom()">
                     <span>✨</span> 创建房间
                 </button>
@@ -28,18 +32,20 @@
             <div class="divider"><span>或加入已有房间</span></div>
 
             <div class="section">
-                <div class="input-group">
+                <div class="input-group" style="margin-bottom: 10px;">
                     <input type="text" id="roomCodeInput" placeholder="输入6位房间代码" maxlength="6" inputmode="numeric">
-                    <button class="btn btn-secondary" onclick="joinRoom()">
-                        <span>🚪</span> 加入
-                    </button>
+                    <input type="text" id="joinPwdInput" placeholder="房间密码" maxlength="6" inputmode="numeric" style="max-width: 120px;">
                 </div>
+                <button class="btn btn-secondary" onclick="joinRoom()" style="width: 100%;">
+                    <span>🚪</span> 加入房间
+                </button>
             </div>
 
             <div class="how-to-use">
                 <h3>使用方法</h3>
                 <ol>
                     <li>一人创建房间，将链接分享给队友</li>
+                    <li>队友输入房间代码和密码加入</li>
                     <li>每人选择自己的角色（101-104）</li>
                     <li>找到正确平台后点击对应方块标记</li>
                     <li>路径实时同步，全队共享</li>
@@ -58,9 +64,18 @@
             btn.disabled = true;
             btn.textContent = '创建中...';
             try {
-                const res = await fetch('/api/room?action=create');
+                const customPwd = document.getElementById('createPwdInput').value.trim();
+                let url = '/api/room?action=create';
+                if (customPwd) url += '&pwd=' + encodeURIComponent(customPwd);
+                const res = await fetch(url);
                 const data = await res.json();
-                window.location.href = 'room.html?code=' + data.code;
+                if (data.error) {
+                    alert(data.error);
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>✨</span> 创建房间';
+                    return;
+                }
+                window.location.href = 'room.html?code=' + data.code + '&pwd=' + data.password;
             } catch (e) {
                 alert('创建房间失败，请检查网络后重试');
                 btn.disabled = false;
@@ -70,16 +85,47 @@
 
         function joinRoom() {
             const code = document.getElementById('roomCodeInput').value.trim();
+            const pwd = document.getElementById('joinPwdInput').value.trim();
             if (!code || !/^\d{6}$/.test(code)) {
                 alert('请输入6位数字房间代码');
                 return;
             }
-            window.location.href = 'room.html?code=' + code;
+            if (!pwd) {
+                alert('请输入房间密码');
+                return;
+            }
+            window.location.href = 'room.html?code=' + code + '&pwd=' + encodeURIComponent(pwd);
         }
 
+        // 回车快捷键
         document.getElementById('roomCodeInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') document.getElementById('joinPwdInput').focus();
+        });
+        document.getElementById('joinPwdInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') joinRoom();
         });
+        document.getElementById('createPwdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') createRoom();
+        });
+
+        // ===== 在线人数 WebSocket =====
+        (function connectStats() {
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const statsWs = new WebSocket(proto + '//' + location.host);
+            statsWs.onopen = () => {
+                statsWs.send(JSON.stringify({ type: 'stats' }));
+            };
+            statsWs.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'stats') {
+                        document.getElementById('onlineCount').textContent = msg.online;
+                    }
+                } catch {}
+            };
+            statsWs.onclose = () => setTimeout(connectStats, 3000);
+            statsWs.onerror = () => statsWs.close();
+        })();
     </script>
 </body>
 </html>

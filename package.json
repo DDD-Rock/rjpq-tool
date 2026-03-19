@@ -1,9 +1,14 @@
 {
   "name": "rjpq-tool",
-  "version": "1.0.0",
-  "description": "冒险岛罗朱跳台四人协作工具",
+  "version": "2.0.0",
+  "description": "冒险岛罗朱跳台四人协作工具 - 云服务器版",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
+  },
+  "dependencies": {
+    "redis": "^4.7.0",
+    "dotenv": "^16.4.0",
+    "ws": "^8.18.0"
   }
 }

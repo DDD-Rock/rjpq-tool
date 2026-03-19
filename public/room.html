@@ -18,6 +18,8 @@
             <div class="room-code-area">
                 <span class="label">房间</span>
                 <span class="code" id="roomCodeDisplay">------</span>
+                <span class="label" style="margin-left: 8px;">密码</span>
+                <span class="code" id="roomPwdDisplay" style="font-size: 13px;">------</span>
                 <button class="copy-btn" onclick="copyRoomLink()" title="复制房间链接">📋</button>
             </div>
         </div>
@@ -26,7 +28,10 @@
                 <span class="label">路径</span>
                 <span class="path-value" id="pathDisplay">????? ?????</span>
             </div>
-            <div class="status-indicator connected" id="statusIndicator">
+            <div class="room-count" id="roomCount" title="房间内人数">
+                <span>👤</span> <span id="countNum">0</span>
+            </div>
+            <div class="status-indicator disconnected" id="statusIndicator">
                 <span class="dot"></span>
             </div>
         </div>
@@ -65,16 +70,17 @@
             { bg: '#cc5de8', glow: 'rgba(204,93,232,0.5)',  text: '#fff' },  // 3: 紫
         ];
         const EMPTY_COLOR = 4;
-        const POLL_INTERVAL = 500; // ms
 
         // ===== 状态 =====
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('code');
+        const roomPwd = urlParams.get('pwd') || '';
         let roomData = Array(40).fill(EMPTY_COLOR);
+        let prevData = Array(40).fill(EMPTY_COLOR);  // 用于差量更新
         let selectedColor = -1;
-        let pollTimer = null;
-        let lastDataJson = '';
-        let lastActionTime = 0;
+        let ws = null;
+        let reconnectTimer = null;
+        let reconnectDelay = 1000;
 
         // 校验
         if (!roomCode) {
@@ -82,6 +88,7 @@
             window.location.href = './';
         }
         document.getElementById('roomCodeDisplay').textContent = roomCode;
+        document.getElementById('roomPwdDisplay').textContent = roomPwd || '---';
 
         // ===== 角色选择 =====
         function setColor(colorIndex) {
@@ -92,7 +99,7 @@
             renderPath();
         }
 
-        // ===== 初始化网格（只执行一次） =====
+        // ===== 初始化网格 =====
         const cells = [];
         function initGrid() {
             const container = document.getElementById('platforms');
@@ -119,9 +126,12 @@
             }
         }
 
-        // ===== 更新单元格样式（不重建 DOM） =====
+        // ===== 差量更新单元格样式 =====
         function updateCells() {
             for (let i = 0; i < 40; i++) {
+                // 只更新实际变化的格子，避免闪烁
+                if (roomData[i] === prevData[i]) continue;
+
                 const cell = cells[i];
                 const val = roomData[i];
                 if (val !== EMPTY_COLOR && COLORS[val]) {
@@ -134,7 +144,14 @@
                     cell.classList.remove('marked');
                 }
             }
+            prevData = [...roomData];
             renderPath();
+        }
+
+        // 首次加载时强制刷新所有格子
+        function updateAllCells() {
+            prevData = Array(40).fill(-1); // 强制所有格子标记为"已变化"
+            updateCells();
         }
 
         // ===== 渲染路径 =====
@@ -145,32 +162,78 @@
                     path[Math.floor(i / 4)] = (i % 4 + 1);
                 }
             }
-            // 从地面（第1层 = 数组末尾）到顶部（第10层 = 数组开头）显示
-            // path[0] 对应第10层（网格第0行），path[9] 对应第1层（网格第9行）
-            // 反转后：索引0=第1层 ... 索引9=第10层
             const reversed = path.slice().reverse();
             const display = reversed.slice(0, 5).join('') + ' ' + reversed.slice(5).join('');
             document.getElementById('pathDisplay').textContent = display;
         }
 
-        // ===== 带重试的 POST =====
-        function postAction(body, retries = 3) {
-            lastActionTime = Date.now();
-            fetch('/api/room', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            }).catch(() => {
-                if (retries > 0) {
-                    setTimeout(() => postAction(body, retries - 1), 300);
+        // ===== WebSocket 通信 =====
+        function getWsUrl() {
+            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return proto + '//' + location.host;
+        }
+
+        function connectWs() {
+            if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return;
+
+            ws = new WebSocket(getWsUrl());
+
+            ws.onopen = () => {
+                setStatus(true);
+                reconnectDelay = 1000;
+                // 加入房间（带密码）
+                ws.send(JSON.stringify({ type: 'join', code: roomCode, password: roomPwd }));
+            };
+
+            ws.onmessage = (event) => {
+                let msg;
+                try { msg = JSON.parse(event.data); } catch { return; }
+
+                if (msg.type === 'sync' && Array.isArray(msg.data)) {
+                    roomData = msg.data;
+                    updateCells();
+                } else if (msg.type === 'count') {
+                    document.getElementById('countNum').textContent = msg.count;
+                } else if (msg.type === 'error') {
+                    alert(msg.error);
+                    if (msg.error === '密码错误' || msg.error === '房间不存在') {
+                        window.location.href = './';
+                    }
                 }
-            });
+            };
+
+            ws.onclose = () => {
+                setStatus(false);
+                scheduleReconnect();
+            };
+
+            ws.onerror = () => {
+                setStatus(false);
+                ws.close();
+            };
+        }
+
+        function scheduleReconnect() {
+            if (reconnectTimer) return;
+            reconnectTimer = setTimeout(() => {
+                reconnectTimer = null;
+                connectWs();
+            }, reconnectDelay);
+            // 指数退避，最大 10 秒
+            reconnectDelay = Math.min(reconnectDelay * 1.5, 10000);
+        }
+
+        function wsSend(msg) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(msg));
+            }
         }
 
         // ===== 点击平台 =====
         let lastClickTime = 0;
-        const CLICK_INTERVAL = 500; // ms
-        async function onCellClick(index) {
+        const CLICK_INTERVAL = 300;
+
+        function onCellClick(index) {
             if (selectedColor === -1) {
                 alert('请先选择角色（101-104）');
                 return;
@@ -179,21 +242,18 @@
             if (now - lastClickTime < CLICK_INTERVAL) return;
             lastClickTime = now;
 
-            lastActionTime = now;
-
             // 取消自己的标记
             if (roomData[index] === selectedColor) {
                 roomData[index] = EMPTY_COLOR;
-                lastDataJson = JSON.stringify(roomData);
                 updateCells();
-                postAction({ code: roomCode, action: 'unmark', index, color: selectedColor });
+                wsSend({ type: 'unmark', index, color: selectedColor });
                 return;
             }
 
-            // 已被其他颜色占用，直接忽略
+            // 已被其他颜色占用
             if (roomData[index] !== EMPTY_COLOR) return;
 
-            // 乐观更新：先更新本地UI，同行内同色只保留当前点击
+            // 乐观更新：同行内同色互斥
             const rowStart = Math.floor(index / 4) * 4;
             for (let i = rowStart; i < rowStart + 4; i++) {
                 if (i !== index && roomData[i] === selectedColor) {
@@ -201,20 +261,17 @@
                 }
             }
             roomData[index] = selectedColor;
-            lastDataJson = JSON.stringify(roomData);
             updateCells();
 
-            postAction({ code: roomCode, action: 'mark', index, color: selectedColor });
+            wsSend({ type: 'mark', index, color: selectedColor });
         }
 
         // ===== 重置 =====
-        async function resetPlatforms() {
+        function resetPlatforms() {
             if (!confirm('确定清空所有标记？')) return;
-            lastActionTime = Date.now();
             roomData = Array(40).fill(EMPTY_COLOR);
-            lastDataJson = JSON.stringify(roomData);
             updateCells();
-            postAction({ code: roomCode, action: 'reset' });
+            wsSend({ type: 'reset' });
         }
 
         // ===== 复制房间链接 =====
@@ -225,7 +282,6 @@
                 btn.textContent = '✅';
                 setTimeout(() => btn.textContent = '📋', 1500);
             }).catch(() => {
-                // 降级：选中文本
                 const el = document.getElementById('roomCodeDisplay');
                 const range = document.createRange();
                 range.selectNodeContents(el);
@@ -234,30 +290,7 @@
             });
         }
 
-        // ===== 轮询同步 =====
-        let polling = false;
-        async function poll() {
-            if (polling) return;
-            if (Date.now() - lastActionTime < 2000) return;
-            polling = true;
-            try {
-                const res = await fetch('/api/room?code=' + roomCode);
-                const json = await res.json();
-                if (Date.now() - lastActionTime < 2000) return;
-                const dataJson = JSON.stringify(json.data);
-                if (dataJson !== lastDataJson) {
-                    lastDataJson = dataJson;
-                    roomData = json.data;
-                    updateCells();
-                }
-                setStatus(true);
-            } catch (e) {
-                setStatus(false);
-            } finally {
-                polling = false;
-            }
-        }
-
+        // ===== 连接状态 =====
         function setStatus(ok) {
             const el = document.getElementById('statusIndicator');
             el.className = 'status-indicator ' + (ok ? 'connected' : 'disconnected');
@@ -265,9 +298,8 @@
 
         // ===== 启动 =====
         initGrid();
-        updateCells();
-        poll();
-        pollTimer = setInterval(poll, POLL_INTERVAL);
+        updateAllCells();
+        connectWs();
     </script>
 </body>
 </html>
