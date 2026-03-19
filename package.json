@@ -1,0 +1,9 @@
+{
+  "name": "rjpq-tool",
+  "version": "1.0.0",
+  "description": "冒险岛罗朱跳台四人协作工具",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}

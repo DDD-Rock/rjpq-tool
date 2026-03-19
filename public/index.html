@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YzY - 冒险岛跳台协作工具</title>
+    <meta name="description" content="冒险岛罗密欧与朱丽叶组队任务跳平台关卡四人实时协作工具">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="home-container">
+        <div class="card glass-card">
+            <div class="logo-area">
+                <div class="logo-icon">🍄</div>
+                <h1 class="title">冒险岛 · 罗朱跳台协作工具</h1>
+                <p class="subtitle">冒险岛世界Artale - YzY公会</p>
+            </div>
+
+            <div class="section">
+                <button class="btn btn-primary" onclick="createRoom()">
+                    <span>✨</span> 创建房间
+                </button>
+            </div>
+
+            <div class="divider"><span>或加入已有房间</span></div>
+
+            <div class="section">
+                <div class="input-group">
+                    <input type="text" id="roomCodeInput" placeholder="输入6位房间代码" maxlength="6" inputmode="numeric">
+                    <button class="btn btn-secondary" onclick="joinRoom()">
+                        <span>🚪</span> 加入
+                    </button>
+                </div>
+            </div>
+
+            <div class="how-to-use">
+                <h3>使用方法</h3>
+                <ol>
+                    <li>一人创建房间，将链接分享给队友</li>
+                    <li>每人选择自己的角色（101-104）</li>
+                    <li>找到正确平台后点击对应方块标记</li>
+                    <li>路径实时同步，全队共享</li>
+                </ol>
+            </div>
+        </div>
+
+        <footer class="footer">
+            MapleStory Romeo & Juliet PQ Tool - 小新
+        </footer>
+    </div>
+
+    <script>
+        async function createRoom() {
+            const btn = document.querySelector('.btn-primary');
+            btn.disabled = true;
+            btn.textContent = '创建中...';
+            try {
+                const res = await fetch('/api/room?action=create');
+                const data = await res.json();
+                window.location.href = 'room.html?code=' + data.code;
+            } catch (e) {
+                alert('创建房间失败，请检查网络后重试');
+                btn.disabled = false;
+                btn.innerHTML = '<span>✨</span> 创建房间';
+            }
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('roomCodeInput').value.trim();
+            if (!code || !/^\d{6}$/.test(code)) {
+                alert('请输入6位数字房间代码');
+                return;
+            }
+            window.location.href = 'room.html?code=' + code;
+        }
+
+        document.getElementById('roomCodeInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinRoom();
+        });
+    </script>
+</body>
+</html>

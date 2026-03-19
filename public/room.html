@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YzY - 房间</title>
+    <meta name="description" content="YzY - 冒险岛罗朱跳台协作工具 - 实时标记平台路径">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="room-body">
+    <!-- 顶部信息栏 -->
+    <header class="room-header">
+        <div class="header-left">
+            <a href="./" class="back-btn" title="返回首页">←</a>
+            <div class="room-code-area">
+                <span class="label">房间</span>
+                <span class="code" id="roomCodeDisplay">------</span>
+                <button class="copy-btn" onclick="copyRoomLink()" title="复制房间链接">📋</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="path-area">
+                <span class="label">路径</span>
+                <span class="path-value" id="pathDisplay">????? ?????</span>
+            </div>
+            <div class="status-indicator connected" id="statusIndicator">
+                <span class="dot"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 角色选择 + 重置 -->
+    <div class="controls-bar">
+        <div class="char-buttons" id="charButtons">
+            <button class="char-btn" data-color="0" onclick="setColor(0)">
+                <span class="char-label">101</span>
+            </button>
+            <button class="char-btn" data-color="1" onclick="setColor(1)">
+                <span class="char-label">102</span>
+            </button>
+            <button class="char-btn" data-color="2" onclick="setColor(2)">
+                <span class="char-label">103</span>
+            </button>
+            <button class="char-btn" data-color="3" onclick="setColor(3)">
+                <span class="char-label">104</span>
+            </button>
+        </div>
+        <button class="reset-btn" onclick="resetPlatforms()">
+            🔄 重置
+        </button>
+    </div>
+
+    <!-- 平台网格 -->
+    <div class="grid-container" id="platforms"></div>
+
+    <script>
+        // ===== 常量 =====
+        const COLORS = [
+            { bg: '#ff6b6b', glow: 'rgba(255,107,107,0.5)', text: '#fff' },  // 0: 红
+            { bg: '#51cf66', glow: 'rgba(81,207,102,0.5)',  text: '#fff' },  // 1: 绿
+            { bg: '#339af0', glow: 'rgba(51,154,240,0.5)',  text: '#fff' },  // 2: 蓝
+            { bg: '#cc5de8', glow: 'rgba(204,93,232,0.5)',  text: '#fff' },  // 3: 紫
+        ];
+        const EMPTY_COLOR = 4;
+        const POLL_INTERVAL = 500; // ms
+
+        // ===== 状态 =====
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('code');
+        let roomData = Array(40).fill(EMPTY_COLOR);
+        let selectedColor = -1;
+        let pollTimer = null;
+        let lastDataJson = '';
+        let lastActionTime = 0;
+
+        // 校验
+        if (!roomCode) {
+            alert('无效的房间代码');
+            window.location.href = './';
+        }
+        document.getElementById('roomCodeDisplay').textContent = roomCode;
+
+        // ===== 角色选择 =====
+        function setColor(colorIndex) {
+            selectedColor = colorIndex;
+            document.querySelectorAll('.char-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.color) === colorIndex);
+            });
+            renderPath();
+        }
+
+        // ===== 初始化网格（只执行一次） =====
+        const cells = [];
+        function initGrid() {
+            const container = document.getElementById('platforms');
+            for (let row = 0; row < 10; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'platform-row';
+
+                const rowNum = document.createElement('div');
+                rowNum.className = 'row-num';
+                rowNum.textContent = 10 - row;
+                rowDiv.appendChild(rowNum);
+
+                for (let col = 0; col < 4; col++) {
+                    const index = row * 4 + col;
+                    const cell = document.createElement('div');
+                    cell.className = 'platform-cell';
+                    cell.textContent = col + 1;
+                    cell.dataset.index = index;
+                    cell.addEventListener('click', () => onCellClick(index));
+                    rowDiv.appendChild(cell);
+                    cells[index] = cell;
+                }
+                container.appendChild(rowDiv);
+            }
+        }
+
+        // ===== 更新单元格样式（不重建 DOM） =====
+        function updateCells() {
+            for (let i = 0; i < 40; i++) {
+                const cell = cells[i];
+                const val = roomData[i];
+                if (val !== EMPTY_COLOR && COLORS[val]) {
+                    cell.style.backgroundColor = COLORS[val].bg;
+                    cell.style.boxShadow = '0 0 12px ' + COLORS[val].glow + ', inset 0 0 8px ' + COLORS[val].glow;
+                    cell.classList.add('marked');
+                } else {
+                    cell.style.backgroundColor = '';
+                    cell.style.boxShadow = '';
+                    cell.classList.remove('marked');
+                }
+            }
+            renderPath();
+        }
+
+        // ===== 渲染路径 =====
+        function renderPath() {
+            const path = new Array(10).fill('?');
+            for (let i = 0; i < 40; i++) {
+                if (roomData[i] === selectedColor) {
+                    path[Math.floor(i / 4)] = (i % 4 + 1);
+                }
+            }
+            // 从地面（第1层 = 数组末尾）到顶部（第10层 = 数组开头）显示
+            // path[0] 对应第10层（网格第0行），path[9] 对应第1层（网格第9行）
+            // 反转后：索引0=第1层 ... 索引9=第10层
+            const reversed = path.slice().reverse();
+            const display = reversed.slice(0, 5).join('') + ' ' + reversed.slice(5).join('');
+            document.getElementById('pathDisplay').textContent = display;
+        }
+
+        // ===== 带重试的 POST =====
+        function postAction(body, retries = 3) {
+            lastActionTime = Date.now();
+            fetch('/api/room', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).catch(() => {
+                if (retries > 0) {
+                    setTimeout(() => postAction(body, retries - 1), 300);
+                }
+            });
+        }
+
+        // ===== 点击平台 =====
+        let lastClickTime = 0;
+        const CLICK_INTERVAL = 500; // ms
+        async function onCellClick(index) {
+            if (selectedColor === -1) {
+                alert('请先选择角色（101-104）');
+                return;
+            }
+            const now = Date.now();
+            if (now - lastClickTime < CLICK_INTERVAL) return;
+            lastClickTime = now;
+
+            lastActionTime = now;
+
+            // 取消自己的标记
+            if (roomData[index] === selectedColor) {
+                roomData[index] = EMPTY_COLOR;
+                lastDataJson = JSON.stringify(roomData);
+                updateCells();
+                postAction({ code: roomCode, action: 'unmark', index, color: selectedColor });
+                return;
+            }
+
+            // 已被其他颜色占用，直接忽略
+            if (roomData[index] !== EMPTY_COLOR) return;
+
+            // 乐观更新：先更新本地UI，同行内同色只保留当前点击
+            const rowStart = Math.floor(index / 4) * 4;
+            for (let i = rowStart; i < rowStart + 4; i++) {
+                if (i !== index && roomData[i] === selectedColor) {
+                    roomData[i] = EMPTY_COLOR;
+                }
+            }
+            roomData[index] = selectedColor;
+            lastDataJson = JSON.stringify(roomData);
+            updateCells();
+
+            postAction({ code: roomCode, action: 'mark', index, color: selectedColor });
+        }
+
+        // ===== 重置 =====
+        async function resetPlatforms() {
+            if (!confirm('确定清空所有标记？')) return;
+            lastActionTime = Date.now();
+            roomData = Array(40).fill(EMPTY_COLOR);
+            lastDataJson = JSON.stringify(roomData);
+            updateCells();
+            postAction({ code: roomCode, action: 'reset' });
+        }
+
+        // ===== 复制房间链接 =====
+        function copyRoomLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = '✅';
+                setTimeout(() => btn.textContent = '📋', 1500);
+            }).catch(() => {
+                // 降级：选中文本
+                const el = document.getElementById('roomCodeDisplay');
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
+            });
+        }
+
+        // ===== 轮询同步 =====
+        let polling = false;
+        async function poll() {
+            if (polling) return;
+            if (Date.now() - lastActionTime < 2000) return;
+            polling = true;
+            try {
+                const res = await fetch('/api/room?code=' + roomCode);
+                const json = await res.json();
+                if (Date.now() - lastActionTime < 2000) return;
+                const dataJson = JSON.stringify(json.data);
+                if (dataJson !== lastDataJson) {
+                    lastDataJson = dataJson;
+                    roomData = json.data;
+                    updateCells();
+                }
+                setStatus(true);
+            } catch (e) {
+                setStatus(false);
+            } finally {
+                polling = false;
+            }
+        }
+
+        function setStatus(ok) {
+            const el = document.getElementById('statusIndicator');
+            el.className = 'status-indicator ' + (ok ? 'connected' : 'disconnected');
+        }
+
+        // ===== 启动 =====
+        initGrid();
+        updateCells();
+        poll();
+        pollTimer = setInterval(poll, POLL_INTERVAL);
+    </script>
+</body>
+</html>
