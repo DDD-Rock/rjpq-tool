@@ -333,7 +333,7 @@ body {
 
 .path-value {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--text-primary);
@@ -516,6 +516,10 @@ body {
     animation: markPop 0.25s ease;
 }
 
+.platform-cell.dimmed {
+    opacity: 0.35;
+}
+
 @keyframes markPop {
     0% { transform: scale(0.9); }
     60% { transform: scale(1.08); }
@@ -538,7 +542,7 @@ body {
     .code { font-size: 14px; }
 
     .path-value {
-        font-size: 15px;
+        font-size: 18px;
         letter-spacing: 1px;
     }
 
@@ -581,5 +585,5 @@ body {
         font-size: 11px;
     }
 
-    .path-value { font-size: 13px; }
+    .path-value { font-size: 16px; }
 }

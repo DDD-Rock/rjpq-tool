@@ -38,7 +38,7 @@
     </header>
     <!-- 路径显示（第二行） -->
     <div class="path-bar">
-        <span class="label">我的路径</span>
+        <span class="label" style="color: #fff;">我的路径</span>
         <span class="path-value" id="pathDisplay">????? ?????</span>
     </div>
 
@@ -134,19 +134,27 @@
         // ===== 差量更新单元格样式 =====
         function updateCells() {
             for (let i = 0; i < 40; i++) {
-                // 只更新实际变化的格子，避免闪烁
-                if (roomData[i] === prevData[i]) continue;
-
                 const cell = cells[i];
                 const val = roomData[i];
-                if (val !== EMPTY_COLOR && COLORS[val]) {
-                    cell.style.backgroundColor = COLORS[val].bg;
-                    cell.style.boxShadow = '0 0 12px ' + COLORS[val].glow + ', inset 0 0 8px ' + COLORS[val].glow;
-                    cell.classList.add('marked');
+                const changed = roomData[i] !== prevData[i];
+
+                if (changed) {
+                    if (val !== EMPTY_COLOR && COLORS[val]) {
+                        cell.style.backgroundColor = COLORS[val].bg;
+                        cell.style.boxShadow = '0 0 12px ' + COLORS[val].glow + ', inset 0 0 8px ' + COLORS[val].glow;
+                        cell.classList.add('marked');
+                    } else {
+                        cell.style.backgroundColor = '';
+                        cell.style.boxShadow = '';
+                        cell.classList.remove('marked');
+                    }
+                }
+
+                // 始终刷新 dimmed 状态（切换角色时也需要）
+                if (val !== EMPTY_COLOR && COLORS[val] && selectedColor !== -1 && val !== selectedColor) {
+                    cell.classList.add('dimmed');
                 } else {
-                    cell.style.backgroundColor = '';
-                    cell.style.boxShadow = '';
-                    cell.classList.remove('marked');
+                    cell.classList.remove('dimmed');
                 }
             }
             prevData = [...roomData];
