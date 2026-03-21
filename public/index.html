@@ -1,68 +1,87 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-i18n-title="title_home" data-i18n-desc="desc_home">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YzY - 冒险岛跳台协作工具</title>
-    <meta name="description" content="冒险岛罗密欧与朱丽叶组队任务跳平台关卡四人实时协作工具">
+    <meta name="description" content="罗朱PQ跳台协作工具 — 创建房间，实时标记，轻松通关。YzY公会出品">
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://rjpq.juanwang.cc/" />
+    <meta property="og:title" content="YzY - 冒险岛跳台协作工具" />
+    <meta property="og:description" content="罗朱PQ跳台协作工具 — 创建房间，同步标记，轻松通关。" />
+    <meta property="og:image" content="https://rjpq.juanwang.cc/og-image.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
+    <script src="js/i18n.js"></script>
 </head>
+
 <body>
     <div class="home-container">
         <div class="card glass-card">
             <div class="logo-area">
                 <div class="logo-icon">🍄</div>
-                <h1 class="title">冒险岛 · 罗朱跳台协作工具</h1>
-                <p class="subtitle">冒险岛世界Artale - YzY公会</p>
-                <p class="online-badge" id="onlineBadge">🌐 在线: <span id="onlineCount">-</span> 人 <button class="refresh-btn" onclick="fetchOnline()" title="刷新在线人数">🔄</button></p>
+                <h1 class="title" data-i18n="heading">冒险岛 · 罗朱跳台协作工具</h1>
+                <p class="subtitle" data-i18n="subtitle">冒险岛世界Artale - YzY公会</p>
+                <p class="online-badge" id="onlineBadge"><span data-i18n="online_prefix">🌐 在线: </span><span
+                        id="onlineCount">-</span><span data-i18n="online_suffix"> 人</span> <button class="refresh-btn"
+                        onclick="fetchOnline()" data-i18n-title="refresh_title" title="刷新在线人数">🔄</button></p>
             </div>
 
             <div class="section">
                 <div class="input-group" style="margin-bottom: 10px;">
-                    <input type="text" id="createPwdInput" placeholder="自定义密码（留空自动生成）" maxlength="4" inputmode="numeric">
+                    <input type="text" id="createPwdInput" data-i18n-placeholder="pwd_placeholder"
+                        placeholder="自定义密码（留空自动生成）" maxlength="4" inputmode="numeric">
                 </div>
                 <button class="btn btn-primary" onclick="createRoom()">
-                    <span>✨</span> 创建房间
+                    <span>✨</span> <span data-i18n="create_room">创建房间</span>
                 </button>
             </div>
 
-            <div class="divider"><span>或加入已有房间</span></div>
+            <div class="divider"><span data-i18n="or_join">或加入已有房间</span></div>
 
             <div class="section">
                 <div class="input-group" style="margin-bottom: 10px;">
-                    <input type="text" id="roomCodeInput" placeholder="输入6位房间代码" maxlength="6" inputmode="numeric">
-                    <input type="text" id="joinPwdInput" placeholder="房间密码" maxlength="4" inputmode="numeric" style="max-width: 120px;">
+                    <input type="text" id="roomCodeInput" data-i18n-placeholder="code_placeholder"
+                        placeholder="输入6位房间代码" maxlength="6" inputmode="numeric">
+                    <input type="text" id="joinPwdInput" data-i18n-placeholder="pwd_join_placeholder" placeholder="房间密码"
+                        maxlength="4" inputmode="numeric" style="max-width: 120px;">
                 </div>
                 <button class="btn btn-secondary" onclick="joinRoom()" style="width: 100%;">
-                    <span>🚪</span> 加入房间
+                    <span>🚪</span> <span data-i18n="join_room">加入房间</span>
                 </button>
             </div>
 
             <div class="how-to-use">
-                <h3>使用方法</h3>
+                <h3 data-i18n="how_to_use">使用方法</h3>
                 <ol>
-                    <li>一人创建房间，将链接分享给队友</li>
-                    <li>队友输入房间代码和密码加入</li>
-                    <li>每人选择自己的角色（101-104）</li>
-                    <li>找到正确平台后点击对应方块标记</li>
-                    <li>路径实时同步，全队共享</li>
+                    <li data-i18n="step1">一人创建房间，将链接分享给队友</li>
+                    <li data-i18n="step2">队友输入房间代码和密码加入</li>
+                    <li data-i18n="step3">每人选择自己的角色（101-104）</li>
+                    <li data-i18n="step4">找到正确平台后点击对应方块标记</li>
+                    <li data-i18n="step5">路径实时同步，全队共享</li>
                 </ol>
             </div>
         </div>
 
         <footer class="footer">
-            MapleStory Romeo & Juliet PQ Tool - 小新
+            MapleStory Romeo &amp; Juliet PQ Tool - 小新
         </footer>
     </div>
 
     <script>
+        applyI18n();
+
         async function createRoom() {
             const btn = document.querySelector('.btn-primary');
             btn.disabled = true;
-            btn.textContent = '创建中...';
+            btn.textContent = t('creating');
             try {
                 const customPwd = document.getElementById('createPwdInput').value.trim();
                 let url = '/api/room?action=create';
@@ -72,14 +91,14 @@
                 if (data.error) {
                     alert(data.error);
                     btn.disabled = false;
-                    btn.innerHTML = '<span>✨</span> 创建房间';
+                    btn.innerHTML = '<span>✨</span> ' + t('create_room');
                     return;
                 }
                 window.location.href = 'room.html?code=' + data.code + '&pwd=' + data.password;
             } catch (e) {
-                alert('创建房间失败，请检查网络后重试');
+                alert(t('create_fail'));
                 btn.disabled = false;
-                btn.innerHTML = '<span>✨</span> 创建房间';
+                btn.innerHTML = '<span>✨</span> ' + t('create_room');
             }
         }
 
@@ -87,11 +106,11 @@
             const code = document.getElementById('roomCodeInput').value.trim();
             const pwd = document.getElementById('joinPwdInput').value.trim();
             if (!code || !/^\d{6}$/.test(code)) {
-                alert('请输入6位数字房间代码');
+                alert(t('input_code'));
                 return;
             }
             if (!pwd) {
-                alert('请输入房间密码');
+                alert(t('input_pwd'));
                 return;
             }
             window.location.href = 'room.html?code=' + code + '&pwd=' + encodeURIComponent(pwd);
@@ -117,11 +136,12 @@
                 const res = await fetch('/api/stats');
                 const data = await res.json();
                 document.getElementById('onlineCount').textContent = data.online;
-            } catch {}
+            } catch { }
             btn.disabled = false;
             btn.style.opacity = '1';
         }
         fetchOnline();
     </script>
 </body>
+
 </html>
