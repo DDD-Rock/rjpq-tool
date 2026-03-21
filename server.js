@@ -79,15 +79,6 @@ function getTotalOnline() {
   return wss ? wss.clients.size : 0;
 }
 
-// 向所有订阅了 stats 的客户端推送在线人数
-const statsClients = new Set();
-function broadcastStats() {
-  const msg = JSON.stringify({ type: 'stats', online: getTotalOnline() });
-  for (const client of statsClients) {
-    if (client.readyState === 1) client.send(msg);
-  }
-}
-
 // ===== WebSocket 消息处理 =====
 async function handleWsMessage(ws, message) {
   let msg;
@@ -99,13 +90,6 @@ async function handleWsMessage(ws, message) {
   }
 
   const { type, code, index, color } = msg;
-
-  // 首页订阅在线人数
-  if (type === 'stats') {
-    statsClients.add(ws);
-    ws.send(JSON.stringify({ type: 'stats', online: getTotalOnline() }));
-    return;
-  }
 
   // 加入房间
   if (type === 'join') {
@@ -134,8 +118,6 @@ async function handleWsMessage(ws, message) {
     ws.send(JSON.stringify({ type: 'sync', data: room.data }));
     // 广播房间人数更新
     broadcastRoomCount(code);
-    // 刷新全局在线人数
-    broadcastStats();
     return;
   }
 
@@ -199,6 +181,16 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
+  // 在线人数查询（首页轮询用）
+  if (url.pathname === '/api/stats') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(JSON.stringify({ online: getTotalOnline() }));
+    return;
+  }
+
   // 创建房间仍用 HTTP（首页调用一次即可）
   if (url.pathname === '/api/room' && url.searchParams.get('action') === 'create') {
     (async () => {
@@ -244,9 +236,6 @@ const wss = new WebSocketServer({ server });
 wss.on('connection', (ws) => {
   ws._roomCode = null;
 
-  // 新连接时刷新全局在线人数
-  broadcastStats();
-
   ws.on('message', (message) => {
     handleWsMessage(ws, message.toString());
   });
@@ -257,9 +246,6 @@ wss.on('connection', (ws) => {
       removeClient(code, ws);
       broadcastRoomCount(code);
     }
-    statsClients.delete(ws);
-    // 延迟一帧刷新，确保 wss.clients 已更新
-    setTimeout(() => broadcastStats(), 50);
   });
 
   ws.on('error', () => {
@@ -268,8 +254,6 @@ wss.on('connection', (ws) => {
       removeClient(code, ws);
       broadcastRoomCount(code);
     }
-    statsClients.delete(ws);
-    setTimeout(() => broadcastStats(), 50);
   });
 });
 

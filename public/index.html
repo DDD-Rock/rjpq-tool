@@ -108,24 +108,16 @@
             if (e.key === 'Enter') createRoom();
         });
 
-        // ===== 在线人数 WebSocket =====
-        (function connectStats() {
-            const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const statsWs = new WebSocket(proto + '//' + location.host);
-            statsWs.onopen = () => {
-                statsWs.send(JSON.stringify({ type: 'stats' }));
-            };
-            statsWs.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(event.data);
-                    if (msg.type === 'stats') {
-                        document.getElementById('onlineCount').textContent = msg.online;
-                    }
-                } catch {}
-            };
-            statsWs.onclose = () => setTimeout(connectStats, 3000);
-            statsWs.onerror = () => statsWs.close();
-        })();
+        // ===== 在线人数轮询 =====
+        async function fetchOnline() {
+            try {
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+                document.getElementById('onlineCount').textContent = data.online;
+            } catch {}
+        }
+        fetchOnline();
+        setInterval(fetchOnline, 5000);
     </script>
 </body>
 </html>
