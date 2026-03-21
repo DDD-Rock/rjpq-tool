@@ -90,19 +90,20 @@
         // ===== 状态 =====
         const urlParams = new URLSearchParams(window.location.search);
         const roomCode = urlParams.get('code');
-        const roomPwd = urlParams.get('pwd') || '';
+        const roomPwd = urlParams.get('pwd');
+
+        // 缺少房间号或密码 → 跳回首页，自动填入房间号
+        if (!roomCode || !/^\d{6}$/.test(roomCode) || !roomPwd) {
+            const back = roomCode ? './?prefill=' + roomCode : './';
+            window.location.href = back;
+        }
+
         let roomData = Array(40).fill(EMPTY_COLOR);
         let prevData = Array(40).fill(EMPTY_COLOR);  // 用于差量更新
         let selectedColor = -1;
         let ws = null;
         let reconnectTimer = null;
         let reconnectDelay = 1000;
-
-        // 校验
-        if (!roomCode) {
-            alert(t('invalid_code'));
-            window.location.href = './';
-        }
         document.getElementById('roomCodeDisplay').textContent = roomCode;
         document.getElementById('roomPwdDisplay').textContent = roomPwd || '---';
 

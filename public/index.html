@@ -127,6 +127,13 @@
             if (e.key === 'Enter') createRoom();
         });
 
+        // ===== 从 room.html 跳转回来时自动填入房间号 =====
+        const _prefill = new URLSearchParams(window.location.search).get('prefill');
+        if (_prefill) {
+            document.getElementById('roomCodeInput').value = _prefill;
+            document.getElementById('joinPwdInput').focus();
+        }
+
         // ===== 在线人数（手动刷新） =====
         async function fetchOnline() {
             const btn = document.querySelector('.refresh-btn');
