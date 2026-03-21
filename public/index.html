@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YzY - 冒险岛跳台协作工具</title>
-    <meta name="description" content="罗朱PQ跳台协作工具 — 创建房间，实时标记，轻松通关。YzY公会出品">
+    <meta name="description" content="罗朱PQ跳台协作工具 — 创建房间，实时标记，轻松通关。">
     <link rel="icon" href="favicon.ico">
 
     <!-- Open Graph -->
@@ -49,9 +49,9 @@
             <div class="section">
                 <div class="input-group" style="margin-bottom: 10px;">
                     <input type="text" id="roomCodeInput" data-i18n-placeholder="code_placeholder"
-                        placeholder="输入6位房间代码" maxlength="6" inputmode="numeric">
+                        placeholder="输入6位房间代码" maxlength="6" inputmode="numeric" style="flex: 1; min-width: 0;">
                     <input type="text" id="joinPwdInput" data-i18n-placeholder="pwd_join_placeholder" placeholder="房间密码"
-                        maxlength="4" inputmode="numeric" style="max-width: 120px;">
+                        maxlength="4" inputmode="numeric" style="width: 120px; flex-shrink: 0;">
                 </div>
                 <button class="btn btn-secondary" onclick="joinRoom()" style="width: 100%;">
                     <span>🚪</span> <span data-i18n="join_room">加入房间</span>
