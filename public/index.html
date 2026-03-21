@@ -17,7 +17,7 @@
                 <div class="logo-icon">🍄</div>
                 <h1 class="title">冒险岛 · 罗朱跳台协作工具</h1>
                 <p class="subtitle">冒险岛世界Artale - YzY公会</p>
-                <p class="online-badge" id="onlineBadge">🌐 在线: <span id="onlineCount">-</span> 人</p>
+                <p class="online-badge" id="onlineBadge">🌐 在线: <span id="onlineCount">-</span> 人 <button class="refresh-btn" onclick="fetchOnline()" title="刷新在线人数">🔄</button></p>
             </div>
 
             <div class="section">
@@ -108,16 +108,20 @@
             if (e.key === 'Enter') createRoom();
         });
 
-        // ===== 在线人数轮询 =====
+        // ===== 在线人数（手动刷新） =====
         async function fetchOnline() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
             try {
                 const res = await fetch('/api/stats');
                 const data = await res.json();
                 document.getElementById('onlineCount').textContent = data.online;
             } catch {}
+            btn.disabled = false;
+            btn.style.opacity = '1';
         }
         fetchOnline();
-        setInterval(fetchOnline, 5000);
     </script>
 </body>
 </html>

@@ -239,6 +239,25 @@ body {
     opacity: 0.8;
 }
 
+.refresh-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    vertical-align: middle;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.refresh-btn:disabled {
+    cursor: default;
+}
+
 /* ========================================
    房间页
    ======================================== */
