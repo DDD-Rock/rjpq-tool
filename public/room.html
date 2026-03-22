@@ -55,18 +55,30 @@
     <!-- 角色选择 + 重置 -->
     <div class="controls-bar">
         <div class="char-buttons" id="charButtons">
-            <button class="char-btn" data-color="0" onclick="setColor(0)">
-                <span class="char-label">101</span><span class="char-badge" id="badge0"></span>
-            </button>
-            <button class="char-btn" data-color="1" onclick="setColor(1)">
-                <span class="char-label">102</span><span class="char-badge" id="badge1"></span>
-            </button>
-            <button class="char-btn" data-color="2" onclick="setColor(2)">
-                <span class="char-label">103</span><span class="char-badge" id="badge2"></span>
-            </button>
-            <button class="char-btn" data-color="3" onclick="setColor(3)">
-                <span class="char-label">104</span><span class="char-badge" id="badge3"></span>
-            </button>
+            <div class="char-wrap">
+                <button class="char-btn" data-color="0" onclick="setColor(0)">
+                    <span class="char-label">101</span>
+                </button>
+                <span class="char-badge" id="badge0"></span>
+            </div>
+            <div class="char-wrap">
+                <button class="char-btn" data-color="1" onclick="setColor(1)">
+                    <span class="char-label">102</span>
+                </button>
+                <span class="char-badge" id="badge1"></span>
+            </div>
+            <div class="char-wrap">
+                <button class="char-btn" data-color="2" onclick="setColor(2)">
+                    <span class="char-label">103</span>
+                </button>
+                <span class="char-badge" id="badge2"></span>
+            </div>
+            <div class="char-wrap">
+                <button class="char-btn" data-color="3" onclick="setColor(3)">
+                    <span class="char-label">104</span>
+                </button>
+                <span class="char-badge" id="badge3"></span>
+            </div>
         </div>
         <button class="reset-btn" onclick="resetPlatforms()">
             🔄 <span data-i18n="reset">重置</span>
@@ -122,8 +134,15 @@
             for (let i = 0; i < 4; i++) {
                 const badge = document.getElementById('badge' + i);
                 if (badge) {
-                    badge.textContent = counts[i] > 0 ? counts[i] : '';
-                    badge.style.display = counts[i] > 0 ? 'inline-flex' : 'none';
+                    if (counts[i] === 0) {
+                        badge.style.display = 'none';
+                    } else if (counts[i] === 1 && selectedColor === i) {
+                        badge.textContent = 'me';
+                        badge.style.display = 'block';
+                    } else {
+                        badge.textContent = counts[i];
+                        badge.style.display = 'block';
+                    }
                 }
             }
         }
