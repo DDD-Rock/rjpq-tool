@@ -135,13 +135,13 @@
                 const badge = document.getElementById('badge' + i);
                 if (badge) {
                     if (counts[i] === 0) {
-                        badge.style.display = 'none';
+                        badge.style.visibility = 'hidden';
                     } else if (counts[i] === 1 && selectedColor === i) {
                         badge.textContent = 'me';
-                        badge.style.display = 'block';
+                        badge.style.visibility = 'visible';
                     } else {
                         badge.textContent = counts[i];
-                        badge.style.display = 'block';
+                        badge.style.visibility = 'visible';
                     }
                 }
             }

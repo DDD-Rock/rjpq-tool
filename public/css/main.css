@@ -459,14 +459,15 @@ body {
 }
 
 .char-badge {
-    display: none;
     width: 100%;
     text-align: center;
     font-size: 10px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.6);
     margin-top: 2px;
+    min-height: 14px;
     letter-spacing: 0.5px;
+    visibility: hidden;
 }
 
 .reset-btn {
