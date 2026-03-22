@@ -75,6 +75,22 @@ function broadcastRoomCount(code) {
   broadcastToRoom(code, { type: 'count', count: getRoomCount(code) });
 }
 
+// 统计房间内各角色选择人数
+function getCharCounts(code) {
+  const counts = [0, 0, 0, 0]; // 101, 102, 103, 104
+  const clients = roomClients.get(code);
+  if (clients) {
+    for (const c of clients) {
+      if (c._charColor >= 0 && c._charColor <= 3) counts[c._charColor]++;
+    }
+  }
+  return counts;
+}
+
+function broadcastCharCounts(code) {
+  broadcastToRoom(code, { type: 'charCounts', counts: getCharCounts(code) });
+}
+
 function getTotalOnline() {
   return wss ? wss.clients.size : 0;
 }
@@ -111,13 +127,15 @@ async function handleWsMessage(ws, message) {
     // 离开旧房间
     if (ws._roomCode) removeClient(ws._roomCode, ws);
     ws._roomCode = code;
+    ws._charColor = -1;
     addClient(code, ws);
     // 刷新 TTL
     await setRoom(code, room);
 
     ws.send(JSON.stringify({ type: 'sync', data: room.data }));
-    // 广播房间人数更新
+    // 广播房间人数 + 角色选择情况
     broadcastRoomCount(code);
+    broadcastCharCounts(code);
     return;
   }
 
@@ -131,6 +149,13 @@ async function handleWsMessage(ws, message) {
   let room = await getRoom(roomCode);
   if (!room) room = { data: Array(40).fill(4), password: '' };
   let data = room.data;
+
+  // 角色选择
+  if (type === 'selectChar' && color >= 0 && color <= 3) {
+    ws._charColor = color;
+    broadcastCharCounts(roomCode);
+    return;
+  }
 
   if (type === 'mark' && index >= 0 && index < 40 && color >= 0 && color <= 3) {
     // 已被其他颜色占用
@@ -235,6 +260,7 @@ const wss = new WebSocketServer({ server });
 
 wss.on('connection', (ws) => {
   ws._roomCode = null;
+  ws._charColor = -1;
 
   ws.on('message', (message) => {
     handleWsMessage(ws, message.toString());
@@ -245,6 +271,7 @@ wss.on('connection', (ws) => {
     if (code) {
       removeClient(code, ws);
       broadcastRoomCount(code);
+      broadcastCharCounts(code);
     }
   });
 
@@ -253,6 +280,7 @@ wss.on('connection', (ws) => {
     if (code) {
       removeClient(code, ws);
       broadcastRoomCount(code);
+      broadcastCharCounts(code);
     }
   });
 });

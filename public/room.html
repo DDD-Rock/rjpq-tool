@@ -56,16 +56,16 @@
     <div class="controls-bar">
         <div class="char-buttons" id="charButtons">
             <button class="char-btn" data-color="0" onclick="setColor(0)">
-                <span class="char-label">101</span>
+                <span class="char-label">101</span><span class="char-badge" id="badge0"></span>
             </button>
             <button class="char-btn" data-color="1" onclick="setColor(1)">
-                <span class="char-label">102</span>
+                <span class="char-label">102</span><span class="char-badge" id="badge1"></span>
             </button>
             <button class="char-btn" data-color="2" onclick="setColor(2)">
-                <span class="char-label">103</span>
+                <span class="char-label">103</span><span class="char-badge" id="badge2"></span>
             </button>
             <button class="char-btn" data-color="3" onclick="setColor(3)">
-                <span class="char-label">104</span>
+                <span class="char-label">104</span><span class="char-badge" id="badge3"></span>
             </button>
         </div>
         <button class="reset-btn" onclick="resetPlatforms()">
@@ -114,6 +114,18 @@
                 btn.classList.toggle('active', parseInt(btn.dataset.color) === colorIndex);
             });
             renderPath();
+            wsSend({ type: 'selectChar', color: colorIndex });
+        }
+
+        // 更新角色选择徽章
+        function updateBadges(counts) {
+            for (let i = 0; i < 4; i++) {
+                const badge = document.getElementById('badge' + i);
+                if (badge) {
+                    badge.textContent = counts[i] > 0 ? counts[i] : '';
+                    badge.style.display = counts[i] > 0 ? 'inline-flex' : 'none';
+                }
+            }
         }
 
         // ===== 初始化网格 =====
@@ -208,6 +220,10 @@
                 reconnectDelay = 1000;
                 // 加入房间（带密码）
                 ws.send(JSON.stringify({ type: 'join', code: roomCode, password: roomPwd }));
+                // 重连后重新告知服务器当前角色选择
+                if (selectedColor >= 0) {
+                    setTimeout(() => wsSend({ type: 'selectChar', color: selectedColor }), 200);
+                }
             };
 
             ws.onmessage = (event) => {
@@ -219,6 +235,8 @@
                     updateCells();
                 } else if (msg.type === 'count') {
                     document.getElementById('countNum').textContent = msg.count;
+                } else if (msg.type === 'charCounts' && Array.isArray(msg.counts)) {
+                    updateBadges(msg.counts);
                 } else if (msg.type === 'error') {
                     alert(msg.error);
                     if (msg.error === '密码错误' || msg.error === '房间不存在') {
