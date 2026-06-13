@@ -33,6 +33,15 @@ const I18N = {
     input_code: '请输入6位数字房间代码',
     input_pwd: '请输入房间密码',
 
+    // 首页公告
+    notice_title: '阅后即焚的公告',
+    notice_p1: '感谢您对 YzY 跳台小工具的支持与喜爱。<span class="notice-highlight-free">本工具完全免费</span>，服务器运营成本始终由个人承担。',
+    notice_p2: '然而昨日发生了令人愤慨的事件：Golden 公会女玩家「o冬天o #fY2YN」公然抢夺本会成员的练级地图，更召来大量 Golden 公会成员合力抢图，致使我们不得不卷入冲突。',
+    notice_declaration: '特此严正声明：Golden公会成员与狗不得使用本工具！',
+    notice_once_hint: '此公告仅在每台设备首次访问时显示，关闭后不再弹出。',
+    notice_ok: '好的，开始使用',
+    notice_view_link: '📢 公告',
+
     // 房间页
     room_label: '房间',
     pwd_label: '密码',
@@ -75,6 +84,14 @@ const I18N = {
     create_fail: '建立房間失敗，請檢查網路後重試',
     input_code: '請輸入6位數字房間代碼',
     input_pwd: '請輸入房間密碼',
+
+    notice_title: '閱後即焚的公告',
+    notice_p1: '感謝您對 YzY 跳台小工具的支持與喜愛。<span class="notice-highlight-free">本工具完全免費</span>，伺服器營運成本始終由個人承擔。',
+    notice_p2: '然而昨日發生了令人憤慨的事件：Golden 公會女玩家「o冬天o #fY2YN」公然搶奪本會成員的練級地圖，更召來大量 Golden 公會成員合力搶圖，致使我們不得不捲入衝突。',
+    notice_declaration: '特此嚴正聲明：Golden公會成員與狗不得使用本工具！',
+    notice_once_hint: '此公告僅在每台設備首次造訪時顯示，關閉後不再彈出。',
+    notice_ok: '好的，開始使用',
+    notice_view_link: '📢 公告',
 
     room_label: '房間',
     pwd_label: '密碼',

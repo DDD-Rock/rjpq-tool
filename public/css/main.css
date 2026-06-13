@@ -232,8 +232,17 @@ body {
     color: var(--text-dim);
 }
 
-.online-badge {
+.online-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 10px;
+}
+
+.online-badge {
+    margin: 0;
     font-size: 13px;
     color: var(--accent-light);
     opacity: 0.8;
@@ -256,6 +265,137 @@ body {
 
 .refresh-btn:disabled {
     cursor: default;
+}
+
+.notice-link {
+    display: inline-block;
+    margin: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--accent-light);
+    background: rgba(108, 92, 231, 0.1);
+    border: 1px solid rgba(108, 92, 231, 0.25);
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.notice-link:hover {
+    color: #fff;
+    background: rgba(108, 92, 231, 0.35);
+    border-color: rgba(108, 92, 231, 0.5);
+}
+
+/* ===== 首页公告弹窗（全屏遮罩 + 底部按钮固定可见） ===== */
+.notice-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.notice-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.notice-dialog {
+    display: flex;
+    flex-direction: column;
+    max-width: 460px;
+    width: 100%;
+    max-height: min(85vh, calc(100dvh - 40px));
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.notice-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 28px 24px 8px;
+}
+
+.notice-actions {
+    flex-shrink: 0;
+    padding: 12px 24px max(20px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.notice-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 18px;
+    color: var(--accent-light);
+}
+
+.notice-body {
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+}
+
+.notice-body p:not(.notice-declaration) {
+    text-indent: 2em;
+}
+
+.notice-highlight-free {
+    color: #51cf66;
+    font-weight: 700;
+    text-shadow: 0 0 12px rgba(81, 207, 102, 0.45);
+}
+
+.notice-body p + p {
+    margin-top: 12px;
+}
+
+.notice-profile {
+    display: block;
+    width: 100%;
+    margin: 14px 0 4px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.notice-declaration {
+    margin-top: 16px !important;
+    padding: 14px 16px;
+    background: rgba(255, 71, 87, 0.12);
+    border: 1px solid rgba(255, 71, 87, 0.45);
+    border-radius: var(--radius-sm);
+    color: #ff6b7a !important;
+    font-size: 15px !important;
+    font-weight: 700;
+    line-height: 1.6 !important;
+    box-shadow: 0 0 20px var(--danger-glow);
+}
+
+.notice-hint {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-indent: 0;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.notice-ok-btn {
+    margin-top: 0;
 }
 
 /* ========================================
@@ -567,6 +707,24 @@ body {
     .glass-card {
         padding: 28px 20px;
         margin: 12px;
+    }
+
+    .notice-dialog.glass-card {
+        padding: 0;
+        margin: 0;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .notice-overlay {
+        padding: 12px;
+    }
+
+    .notice-scroll {
+        padding: 20px 16px 8px;
+    }
+
+    .notice-actions {
+        padding: 10px 16px max(16px, env(safe-area-inset-bottom));
     }
 
     .title { font-size: 24px; }

@@ -31,9 +31,12 @@
                 <div class="logo-icon">🍄</div>
                 <h1 class="title" data-i18n="heading">冒险岛 · 罗朱跳台协作工具</h1>
                 <p class="subtitle" data-i18n="subtitle">冒险岛世界Artale - YzY公会</p>
-                <p class="online-badge" id="onlineBadge"><span data-i18n="online_prefix">🌐 在线: </span><span
-                        id="onlineCount">-</span><span data-i18n="online_suffix"> 人</span> <button class="refresh-btn"
-                        onclick="fetchOnline()" data-i18n-title="refresh_title" title="刷新在线人数">🔄</button></p>
+                <div class="online-row">
+                    <p class="online-badge" id="onlineBadge"><span data-i18n="online_prefix">🌐 在线: </span><span
+                            id="onlineCount">-</span><span data-i18n="online_suffix"> 人</span> <button class="refresh-btn"
+                            onclick="fetchOnline()" data-i18n-title="refresh_title" title="刷新在线人数">🔄</button></p>
+                    <button type="button" class="notice-link" onclick="openNotice()" data-i18n="notice_view_link">📢 公告</button>
+                </div>
             </div>
 
             <div class="section">
@@ -72,6 +75,25 @@
             </div>
         </div>
 
+    <!-- 首页公告弹窗（每台设备仅显示一次） -->
+    <div class="notice-overlay" id="noticeModal" hidden>
+        <div class="notice-dialog glass-card" role="dialog" aria-labelledby="noticeTitle" aria-modal="true">
+            <div class="notice-scroll">
+                <h2 class="notice-title" id="noticeTitle" data-i18n="notice_title">阅后即焚的公告</h2>
+                <div class="notice-body">
+                    <p data-i18n-html="notice_p1"></p>
+                    <p data-i18n="notice_p2"></p>
+                    <img class="notice-profile" src="dongtian.png" alt="o冬天o 角色资料" loading="lazy">
+                    <p class="notice-declaration" data-i18n="notice_declaration"></p>
+                </div>
+            </div>
+            <div class="notice-actions">
+                <p class="notice-hint" data-i18n="notice_once_hint"></p>
+                <button class="btn btn-primary notice-ok-btn" type="button" onclick="dismissNotice()" data-i18n="notice_ok">好的，开始使用</button>
+            </div>
+        </div>
+    </div>
+
         <footer class="footer">
             MapleStory Romeo &amp; Juliet PQ Tool - 小新
             <div style="margin-top: 8px;">
@@ -81,7 +103,28 @@
     </div>
 
     <script>
+        const NOTICE_STORAGE_KEY = 'rjpq_announcement_seen';
+
         applyI18n();
+        showNoticeIfNeeded();
+
+        function openNotice() {
+            const modal = document.getElementById('noticeModal');
+            modal.hidden = false;
+            modal.classList.add('visible');
+        }
+
+        function showNoticeIfNeeded() {
+            if (localStorage.getItem(NOTICE_STORAGE_KEY)) return;
+            openNotice();
+        }
+
+        function dismissNotice() {
+            localStorage.setItem(NOTICE_STORAGE_KEY, '1');
+            const modal = document.getElementById('noticeModal');
+            modal.classList.remove('visible');
+            modal.hidden = true;
+        }
 
         async function createRoom() {
             const btn = document.querySelector('.btn-primary');
