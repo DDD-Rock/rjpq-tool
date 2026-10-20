@@ -75,7 +75,7 @@
             </div>
         </div>
 
-    <!-- 首页公告弹窗（每台设备仅显示一次） -->
+    <!-- 首页公告弹窗 -->
     <div class="notice-overlay" id="noticeModal" hidden>
         <div class="notice-dialog glass-card" role="dialog" aria-labelledby="noticeTitle" aria-modal="true">
             <div class="notice-scroll">
@@ -88,7 +88,6 @@
                 </div>
             </div>
             <div class="notice-actions">
-                <p class="notice-hint" data-i18n="notice_once_hint"></p>
                 <button class="btn btn-primary notice-ok-btn" type="button" onclick="dismissNotice()" data-i18n="notice_ok">好的，开始使用</button>
             </div>
         </div>
@@ -103,10 +102,7 @@
     </div>
 
     <script>
-        const NOTICE_STORAGE_KEY = 'rjpq_announcement_seen';
-
         applyI18n();
-        showNoticeIfNeeded();
 
         function openNotice() {
             const modal = document.getElementById('noticeModal');
@@ -114,13 +110,7 @@
             modal.classList.add('visible');
         }
 
-        function showNoticeIfNeeded() {
-            if (localStorage.getItem(NOTICE_STORAGE_KEY)) return;
-            openNotice();
-        }
-
         function dismissNotice() {
-            localStorage.setItem(NOTICE_STORAGE_KEY, '1');
             const modal = document.getElementById('noticeModal');
             modal.classList.remove('visible');
             modal.hidden = true;
